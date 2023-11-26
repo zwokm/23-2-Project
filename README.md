@@ -95,7 +95,7 @@ int main()
 {
 	system("title 별 피하기");
 	system("mode con: cols=50 lines=27");//지역변수 
-	int kb, kb1, n[20], ran[20], swit[19];
+	int kb, kb1, n[20], ran[20], swit[19], sleep_num;
 	register int i, j;
 
 	srand(time(NULL));
@@ -144,6 +144,15 @@ int main()
 		gotoxy(cursor1.cx, cursor1.cy);
 		BLUE printf("%s", player);
 
+		/*최초 랜덤  초기화*/
+		for (i = 0; i < 20; i++)
+		{
+			do
+			{
+				ran[i] = rand() % 19 + 2;
+			} while ((ran[i] % 2 == 0 ? 1 : 0) == 0);
+		}
+
 		/*게임 실행화면 오른쪽 내용들*/
 		gotoxy(28, 6);
 		GRAY printf("점수 : ");
@@ -158,36 +167,85 @@ int main()
 		gotoxy(28, 13);
 		GRAY printf("←  →");
 
-		for (j = 0; j < 20; j++)/*충돌 확인 -> 생명,스코어 감소*/
+		if (game_source1.diff == 0)
+			sleep_num = 22;
+
+		int j_count = 0;
+
+		/*게임 실행중*//*중요부분*/
+		for (i = 1; ; i++) //무한루프
 		{
-			int a;
-			a = player_dead(&ran[j], &n[j]);
-			if (a == 1)
+			Sleep(sleep_num);
+
+			if (kbhit())
+				move();
+
+			if (i % 100 == 0)
 			{
-				if (game_source1.life == 0)
+				j_count++;
+			}
+
+			if (kbhit())
+				move();
+
+			for (j = 0; j <= j_count; j++)
+			{
+				fall_star(&n[j], &ran[j]);
+			}
+
+			if (kbhit())
+				move();
+
+			Sleep(sleep_num);
+
+			if (kbhit())
+				move();
+
+			for (j = 0; j < 20; j++)/*충돌 확인 -> 생명,스코어 감소*/
+			{
+				int a;
+				a = player_dead(&ran[j], &n[j]);
+				if (a == 1)
 				{
-					break;
-				}
-				else
-				{
-					game_source1.life--;
-					game_source1.score -= 5;
+					if (game_source1.life == 0)
+					{
+						break;
+					}
+					else
+					{
+						game_source1.life--;
+						game_source1.score -= 5;
+					}
 				}
 			}
+
+			if (kbhit())
+				move();
+
+			Sleep(sleep_num);
+
+			if (kbhit())
+				move();
+
+			gotoxy(35, 6); /*점수,생명 실행중 바뀌는 부분임*/
+			RED printf("%-4d", game_source1.score);
+			gotoxy(35, 8);
+			RED printf("%d", game_source1.life);
+			gotoxy(48, 26);
+
+			if (kbhit())
+				move();
+
+			Sleep(sleep_num);
+
+			if (kbhit())
+				move();
+
+			if (game_source1.score > game_source1.score_ptf)//승리 
+				break;
+			else if (game_source1.life == 0)//패배
+				break;
 		}
-
-		gotoxy(35, 6); /*점수,생명 실행중 바뀌는 부분임*/
-		RED printf("%-4d", game_source1.score);
-		gotoxy(35, 8);
-		RED printf("%d", game_source1.life);
-		gotoxy(48, 26);
-
-
-		if (game_source1.score > game_source1.score_ptf)//승리 
-			break;
-		else if (game_source1.life == 0)//패배
-			break;
-	    
 		if (game_source1.score > game_source1.score_ptf)//승리
 		{
 			gotoxy(0, 0);
@@ -250,9 +308,35 @@ void map_ptf(int k)
 
 void fall_star(int* n, int* ran)
 {
+	if (*n < 19)
+	{
+		if (*n != 1)
+		{
+			gotoxy(*ran, *n - 1);
+			printf("  ");
+		}
+
+		gotoxy(*ran, *n);
+		YELLOW printf("★");
+
+		(*n)++;
+	}
+	else
+	{
+		gotoxy(*ran, *n - 1);
+		printf("  ");
+		gotoxy(cursor1.cx, cursor1.cy);
+		BLUE printf("%s", player);
+		*n = 1;
+		game_source1.score += 5;
+		do
+		{
+			*ran = rand() % 19 + 2;
+		} while (((*ran) % 2 == 0 ? 1 : 0) == 0);
+	}
+	gotoxy(48, 26);
 
 }
-
 void move()
 {
 	register int kb;
@@ -341,4 +425,16 @@ void menu()
 	YELLOW printf("★  ★  ★  ★  ★  ★  ★  ★  ★  ★  ★  ★  ★  ★  ★\n");
 
 	getch();
+}
+int player_dead(int* ran, int* n)
+{
+	if (*ran == cursor1.cx && *n == 19)
+	{
+		gotoxy(cursor1.cx, cursor1.cy);
+		RED printf("\a※");
+		Sleep(300);
+		return 1;
+	}
+	else
+		return 0;
 }
